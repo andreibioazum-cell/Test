@@ -32,7 +32,7 @@ jobs:
         run: make test
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -54,7 +54,33 @@ jobs:
 
       - name: Build signed release APK
         working-directory: android
-        run: gradle --no-daemon --stacktrace --warning-mode all :app:assembleRelease
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace --console=plain --warning-mode all :app:assembleRelease 2>&1 | tee "$RUNNER_TEMP/gradle.log"
+
+      - name: Capture native build diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          {
+            echo "--- generated Android files ---"
+            find android -maxdepth 6 -type f | sort
+            echo "--- CMake logs ---"
+            find android -path '*/.cxx/*' -type f \( -name '*.log' -o -name '*.txt' \) -print -exec tail -n 200 {} \;
+          } > "$RUNNER_TEMP/android-build-diagnostics.txt"
+
+      - name: Upload failed build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrblx-build-diagnostics
+          path: |
+            ${{ runner.temp }}/gradle.log
+            ${{ runner.temp }}/android-build-diagnostics.txt
+            android/app/.cxx
+          if-no-files-found: warn
+          retention-days: 3
 
       - name: Verify APK and publish build summary
         shell: bash
