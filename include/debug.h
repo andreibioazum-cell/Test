@@ -6,7 +6,8 @@
 #include <stdlib.h>
 
 #include <sys/syscall.h>
-#define gettid() syscall(SYS_gettid)
+#include <unistd.h>
+#define openrblx_gettid() syscall(SYS_gettid)
 
 const char *debugstr_vector3(Vector3 v)
 {
@@ -35,8 +36,6 @@ const char *debugstr_color3(Color3 c)
     return debugstr_vector3((Vector3){c.R, c.G, c.B});
 }
 
-#include <unistd.h>
-
 void dbg_printf(const char *type, const char *channel, const char *func, const char *restrict format, ...)
 {
     static char buf[1024];
@@ -47,7 +46,7 @@ void dbg_printf(const char *type, const char *channel, const char *func, const c
         return;
     }
 
-    snprintf(buf, 1024, "%04x:%s:%s:%s %s", gettid(), type, channel, func, format);
+    snprintf(buf, 1024, "%04x:%s:%s:%s %s", openrblx_gettid(), type, channel, func, format);
     
     va_list args;
     va_start(args, format);
