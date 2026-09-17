@@ -59,6 +59,15 @@ jobs:
           set -o pipefail
           gradle --no-daemon --stacktrace --console=plain --warning-mode all :app:assembleRelease 2>&1 | tee "$RUNNER_TEMP/gradle.log"
 
+      - name: Report concise native build errors
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          grep -E '(^| )(error:|CMake Error|FAILURE:|What went wrong|Could not)' "$RUNNER_TEMP/gradle.log" | tail -n 40 | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+
       - name: Capture native build diagnostics
         if: failure()
         shell: bash
