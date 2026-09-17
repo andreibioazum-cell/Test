@@ -60,6 +60,7 @@ void dbg_printf(const char *type, const char *channel, const char *func, const c
 #ifndef _DEBUG_
 #define _DEBUG_
 
+#include <raylib.h>
 #include <raymath.h>
 #include "cframe.h"
 #include "color3.h"

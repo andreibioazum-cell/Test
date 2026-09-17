@@ -1,6 +1,7 @@
 #ifndef _LUAU_VECTOR2_
 #define _LUAU_VECTOR2_
 
+#include <raylib.h>
 #include <raymath.h>
 #include "lua.h"
 

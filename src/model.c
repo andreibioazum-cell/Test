@@ -8,7 +8,14 @@
 
 DEFAULT_DEBUG_CHANNEL(model)
 
-void model_draw(Model_Instance *mdl)
+static void model_draw(Model_Instance *mdl);
+
+static void model_draw_pv(PVInstance *this)
+{
+    model_draw((Model_Instance *)this);
+}
+
+static void model_draw(Model_Instance *mdl)
 {
     //CFrame cf = Model_GetModelCFrame(mdl);
     //DrawCube((Vector3){cf.X, cf.Y, cf.Z}, 1, 1, 1, WHITE);
@@ -19,7 +26,7 @@ Model_Instance *Model_new(const char *className, Instance *parent)
     Model_Instance *newInst = PVInstance_new(className, parent);
 
     newInst->pvinstance.instance.DataCost = sizeof(Model_Instance);
-    newInst->pvinstance.drawFunc = model_draw;
+    newInst->pvinstance.drawFunc = model_draw_pv;
 
     newInst = realloc(newInst, sizeof(Model_Instance));
     newInst->PrimaryPart = NULL;

@@ -307,6 +307,11 @@ void part_draw(Part *this)
 
 }
 
+static void part_draw_pv(PVInstance *this)
+{
+    part_draw((Part *)this);
+}
+
 Part *Part_new(const char *className, Instance *parent)
 {
     Part *newInst = FormFactorPart_new(className, parent);
@@ -314,7 +319,7 @@ Part *Part_new(const char *className, Instance *parent)
     newInst->formfactorpart.basepart.pvinstance.instance.DataCost = sizeof(Part);
     newInst = realloc(newInst, sizeof(Part));
 
-    newInst->formfactorpart.basepart.pvinstance.drawFunc = part_draw;
+    newInst->formfactorpart.basepart.pvinstance.drawFunc = part_draw_pv;
 
     newInst->material = LoadMaterialDefault();
     newInst->material.maps[MATERIAL_MAP_DIFFUSE].texture = ((TextureContentProvider*)ServiceProvider_GetService(GetDataModel(), "TextureContentProvider"))->studsTexture;

@@ -3,12 +3,19 @@
 #include <stdio.h>
 #include "debug.h"
 
+static void trusspart_draw(TrussPart *this);
+
+static void trusspart_draw_pv(PVInstance *this)
+{
+    trusspart_draw((TrussPart *)this);
+}
+
 static Color rl_from_color3(Color3 col)
 {
     return (Color){col.R * 255, col.G * 255, col.B * 255, 255};
 }
 
-void trusspart_draw(TrussPart *this)
+static void trusspart_draw(TrussPart *this)
 {
     printf("draw truss part ");
     printf("at position %s ", debugstr_vector3(this->basepart.Position));
@@ -25,7 +32,7 @@ TrussPart *TrussPart_new(const char *className, Instance *parent)
     TrussPart *newInst = BasePart_new("TrussPart", parent);
 
     newInst->basepart.pvinstance.instance.DataCost = sizeof(TrussPart);
-    newInst->basepart.pvinstance.drawFunc = trusspart_draw;
+    newInst->basepart.pvinstance.drawFunc = trusspart_draw_pv;
 
     if (parent) Instance_SetParent(newInst, parent);
 

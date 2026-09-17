@@ -10,6 +10,11 @@
 
 DEFAULT_DEBUG_CHANNEL(basepart)
 
+static void basepart_draw_pv(PVInstance *this)
+{
+    BasePart_Draw((BasePart *)this);
+}
+
 BasePart *BasePart_new(const char *className, Instance *parent)
 {
     BasePart *newInst = PVInstance_new(className, parent);
@@ -20,7 +25,7 @@ BasePart *BasePart_new(const char *className, Instance *parent)
     newInst->Touched = RBXScriptSignal_new();
     newInst->TouchEnded = RBXScriptSignal_new();
 
-    newInst->pvinstance.drawFunc = BasePart_Draw;
+    newInst->pvinstance.drawFunc = basepart_draw_pv;
 
     newInst->FrontSurface = SurfaceType_Smooth;
     newInst->BackSurface = SurfaceType_Smooth;

@@ -10,6 +10,8 @@
 
 DEFAULT_DEBUG_CHANNEL(meshpart)
 
+static void meshpart_draw_pv(PVInstance *this);
+
 MeshPart *MeshPart_new(const char *className, Instance *parent)
 {
     MeshPart *newInst = TriangleMeshPart_new(className, parent);
@@ -20,7 +22,7 @@ MeshPart *MeshPart_new(const char *className, Instance *parent)
     if (parent) Instance_SetParent(newInst, parent);
 
     newInst->meshLoaded = false;
-    newInst->trianglemeshpart.basepart.pvinstance.drawFunc = MeshPart_Draw;
+    newInst->trianglemeshpart.basepart.pvinstance.drawFunc = meshpart_draw_pv;
 
     return newInst;
 }
@@ -98,6 +100,11 @@ void MeshPart_Draw(MeshPart *this)
         DrawMesh(this->mesh, this->material, MatrixIdentity());
 
     rlPopMatrix();
+}
+
+static void meshpart_draw_pv(PVInstance *this)
+{
+    MeshPart_Draw((MeshPart *)this);
 }
 
 void serialize_MeshPart(MeshPart *meshpart, SerializeInstance *inst)

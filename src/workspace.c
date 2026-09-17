@@ -7,9 +7,14 @@
 
 DEFAULT_DEBUG_CHANNEL(workspace)
 
-void workspace_draw(Workspace *this)
+static void workspace_draw(Workspace *this)
 {
 
+}
+
+static void workspace_draw_pv(PVInstance *this)
+{
+    workspace_draw((Workspace *)this);
 }
 
 Workspace *Workspace_new(const char *className, Instance *parent)
@@ -28,7 +33,7 @@ Workspace *Workspace_new(const char *className, Instance *parent)
     Camera_Instance *camera = Camera_new("Camera", newInst);
     newInst->CurrentCamera = camera;
 
-    newInst->rootinstance.model.pvinstance.drawFunc = workspace_draw;
+    newInst->rootinstance.model.pvinstance.drawFunc = workspace_draw_pv;
     newInst->rootinstance.model.pvinstance.instance.Name = "Workspace";
 
     if (parent) Instance_SetParent(newInst, parent);

@@ -49,6 +49,11 @@ static void wedgepart_draw(WedgePart *this)
 
 }
 
+static void wedgepart_draw_pv(PVInstance *this)
+{
+    wedgepart_draw((WedgePart *)this);
+}
+
 WedgePart *WedgePart_new(const char *className, Instance *parent)
 {
     WedgePart *newInst = FormFactorPart_new("WedgePart", parent);
@@ -56,7 +61,7 @@ WedgePart *WedgePart_new(const char *className, Instance *parent)
     newInst->formfactorpart.basepart.pvinstance.instance.DataCost = sizeof(WedgePart);
     newInst = realloc(newInst, sizeof(WedgePart));
 
-    newInst->formfactorpart.basepart.pvinstance.drawFunc = wedgepart_draw;
+    newInst->formfactorpart.basepart.pvinstance.drawFunc = wedgepart_draw_pv;
 
     if (parent) Instance_SetParent(newInst, parent);
 
