@@ -19,6 +19,11 @@ void draw_cylindermesh(CylinderMesh *this, BasePart *part)
         12, rl_from_color3(vertexColor, 0.0f));
 }
 
+static void cylinder_mesh_draw(DataModelMesh *this, BasePart *part)
+{
+    draw_cylindermesh((CylinderMesh *)this, part);
+}
+
 CylinderMesh *CylinderMesh_new(const char *className, Instance *parent)
 {
     CylinderMesh *newInst = BevelMesh_new("CylinderMesh", parent);
@@ -26,7 +31,7 @@ CylinderMesh *CylinderMesh_new(const char *className, Instance *parent)
     newInst->bevelmesh.datamodelmesh.instance.DataCost = sizeof(CylinderMesh);
     newInst = realloc(newInst, sizeof(CylinderMesh));
 
-    newInst->bevelmesh.datamodelmesh.drawFunc = draw_cylindermesh;
+    newInst->bevelmesh.datamodelmesh.drawFunc = cylinder_mesh_draw;
 
     return newInst;
 }

@@ -394,6 +394,11 @@ void draw_specialmesh(SpecialMesh *this, BasePart *part)
     }
 }
 
+static void specialmesh_draw(DataModelMesh *this, BasePart *part)
+{
+    draw_specialmesh((SpecialMesh *)this, part);
+}
+
 SpecialMesh *SpecialMesh_new(const char *className, Instance *parent)
 {
     SpecialMesh *newInst = FileMesh_new("SpecialMesh", parent);
@@ -402,7 +407,7 @@ SpecialMesh *SpecialMesh_new(const char *className, Instance *parent)
     newInst = realloc(newInst, sizeof(SpecialMesh));
 
     newInst->MeshType = MeshType_Head;
-    newInst->filemesh.datamodelmesh.drawFunc = draw_specialmesh;
+    newInst->filemesh.datamodelmesh.drawFunc = specialmesh_draw;
 
     if (parent) Instance_SetParent(newInst, parent);
 

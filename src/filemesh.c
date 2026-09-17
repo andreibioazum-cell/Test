@@ -24,6 +24,11 @@ void FileMesh_Draw(FileMesh *this, BasePart *part)
     if (this->mesh.vertexCount) DrawMesh(this->mesh, this->material, MatrixTranslate(part->Position.x, part->Position.y, part->Position.z));
 }
 
+static void filemesh_draw(DataModelMesh *this, BasePart *part)
+{
+    FileMesh_Draw((FileMesh *)this, part);
+}
+
 FileMesh *FileMesh_new(const char *className, Instance *parent)
 {
     FileMesh *newInst = DataModelMesh_new(className, parent);
@@ -31,7 +36,7 @@ FileMesh *FileMesh_new(const char *className, Instance *parent)
     newInst->datamodelmesh.instance.DataCost = sizeof(FileMesh);
     newInst = realloc(newInst, sizeof(FileMesh));
 
-    newInst->datamodelmesh.drawFunc = FileMesh_Draw;
+    newInst->datamodelmesh.drawFunc = filemesh_draw;
     newInst->meshLoaded = false;
     newInst->material = LoadMaterialDefault();
 
