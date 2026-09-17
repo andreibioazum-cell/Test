@@ -36,17 +36,27 @@ LDFLAGS+=-static-libstdc++
 LDFLAGS+=-static-libgcc
 endif
 
-PROGRAMS=studio player
+# The distributable target is the player.  Studio is not part of the
+# phone-only product; its sources remain available for future editor work but
+# are never included in the default build.
+PROGRAMS=player
 LIBRARIES=
 
+# A curl bundle is present for the Windows developer build only.  Keep the
+# host build/test path usable on Linux CI images that do not ship curl headers
+# by compiling the documented offline stub instead of failing at preprocessing.
 curl_NAME=libcurl-$(PLATFORM)
+ifneq ($(wildcard lib/$(curl_NAME)/include/curl/curl.h),)
 CFLAGS+=-Ilib/$(curl_NAME)/include
 LDFLAGS+=-Llib/$(curl_NAME)/lib
 LDFLAGS+=-lcurl
 LDFLAGS+=-Wl,-rpath,lib/$(curl_NAME)/lib
+else
+CFLAGS+=-D OPENRBLX_NO_CURL
+endif
 
 
-all: $(DISTDIR) $(DISTDIR)/src/../lib/luau/VM/src $(DISTDIR)/src/../lib/luau/Compiler/src $(DISTDIR)/src/../lib/luau/Ast/src $(DISTDIR)/src $(DISTDIR)/src/luau $(DISTDIR)/src/../lib/cJSON/src $(DISTDIR)/src/filetypes $(DISTDIR)/src/../lib/xml/src $(DISTDIR)/src/../lib/lz4/src $(DISTDIR)/src/../lib/zstd/src $(DISTDIR)/src/../studio/classes $(DISTDIR)/src/../studio $(DISTDIR)/src/../player $(foreach prog, $(PROGRAMS), $(DISTDIR)/$(prog)$(EXEC_EXTENSION)) $(foreach lib, $(LIBRARIES), $(DISTDIR)/$(lib)$(LIB_EXTENSION) $(DISTDIR)/$(lib)$(LIB_EXTENSION_STATIC)) deps
+all: $(DISTDIR) $(DISTDIR)/src/../lib/luau/VM/src $(DISTDIR)/src/../lib/luau/Compiler/src $(DISTDIR)/src/../lib/luau/Ast/src $(DISTDIR)/src $(DISTDIR)/src/luau $(DISTDIR)/src/../lib/cJSON/src $(DISTDIR)/src/filetypes $(DISTDIR)/src/../lib/xml/src $(DISTDIR)/src/../lib/lz4/src $(DISTDIR)/src/../lib/zstd/src $(DISTDIR)/src/../player $(foreach prog, $(PROGRAMS), $(DISTDIR)/$(prog)$(EXEC_EXTENSION)) $(foreach lib, $(LIBRARIES), $(DISTDIR)/$(lib)$(LIB_EXTENSION) $(DISTDIR)/$(lib)$(LIB_EXTENSION_STATIC)) deps
 
 ifneq ($(DISTDIR), .)
 deps:
@@ -124,8 +134,6 @@ CXXFLAGS+=-DLUA_API='extern
 CXXFLAGS+="C"'
 CXXFLAGS+=-DLUACODE_API='extern
 CXXFLAGS+="C"'
-
-LDFLAGS+=-lcurl
 
 CFLAGS+=-Ilib/$(RAYLIB_NAME)/include
 
@@ -312,23 +320,8 @@ rbxm_SOURCES+=$(DISTDIR)/src/../lib/zstd/src/zstd_decompress.o
 
 rbxs_SOURCES+=$(DISTDIR)/src/filetypes/rbxs.o
 
-studioclasses_SOURCES+=$(DISTDIR)/src/../studio/classes/studioservice.o
-studioclasses_SOURCES+=$(DISTDIR)/src/../studio/classes/corepackages.o
-studioclasses_SOURCES+=$(DISTDIR)/src/../studio/classes/changehistoryservice.o
-
-studio_SOURCES+=$(DISTDIR)/src/../studio/studio.o
-studio_CXX_SOURCES+=$(instance_CXX_SOURCES)
-studio_SOURCES+=$(instance_SOURCES)
-studio_CXX_SOURCES+=$(rbxmx_CXX_SOURCES)
-studio_SOURCES+=$(rbxmx_SOURCES)
-studio_CXX_SOURCES+=$(rbxm_CXX_SOURCES)
-studio_SOURCES+=$(rbxm_SOURCES)
-studio_CXX_SOURCES+=$(studioclasses_CXX_SOURCES)
-studio_SOURCES+=$(studioclasses_SOURCES)
-
-$(DISTDIR)/studio$(EXEC_EXTENSION): $(studio_SOURCES) $(studio_CXX_SOURCES)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
+# The Studio executable is intentionally not linked into the phone build.
+# Runtime classes used by place files are still part of instance_SOURCES above.
 player_SOURCES+=$(DISTDIR)/src/../player/player.o
 player_CXX_SOURCES+=$(instance_CXX_SOURCES)
 player_SOURCES+=$(instance_SOURCES)
@@ -351,6 +344,16 @@ $(DISTDIR)/%.o: %.cpp
 clean:
 	rm -rf $(DISTDIR)/*
 
-all_dist:
-	DISTDIR=$(DISTDIR)/dist/linux64-debug PLATFORM=linux64-debug $(MAKE)
-	DISTDIR=$(DISTDIR)/dist/win64 PLATFORM=win64 $(MAKE)
+# Phone distribution is built by the Gradle Android project.  Keep a small
+# Make entry point for developers who prefer `make android`.
+android:
+	gradle --no-daemon -p android :app:assembleRelease
+
+# Kept as a compatibility alias, but deliberately does not produce Linux or
+# Windows binaries anymore.
+all_dist: android
+
+.PHONY: android all_dist test
+
+test:
+	python3 tests/test_mobile_config.py

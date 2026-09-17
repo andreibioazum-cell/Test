@@ -25,6 +25,18 @@ TODO:
 
 Testing:
 - test_*: test that file format. takes the file as an argument.
+- `make test`: validates the phone-only Android project without external test dependencies.
+
+Android / phone build:
+- The distributable target is the Android player only; the desktop Studio executable is not
+  included in the phone build.
+- The reproducible APK project is in `android/` and targets arm64-v8a phones from Android API 29.
+- `make android` builds the signed CI/test APK with Gradle. The same build runs in
+  `.github/workflows/android.yml`, uploads `app-release.apk`, and verifies its signature.
+- The APK bundles `res/test1.rbxl` and the renderer assets. On Android the player opens that place
+  automatically and provides a touch joystick plus a jump button. Remote HTTP asset loading is
+  disabled in the self-contained mobile binary; desktop builds can still use the curl path when
+  their platform bundle is available.
 
 Lumber INC memory usage:
 62.31 MB: Original

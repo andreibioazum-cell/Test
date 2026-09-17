@@ -6,3 +6,5 @@ cache
 
 /*-debug
 build
+android/.gradle
+android/local.properties

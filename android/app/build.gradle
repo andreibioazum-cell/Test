@@ -1,0 +1,71 @@
+plugins {
+    id "com.android.application"
+}
+
+// The Android project lives below the C engine, so assets are copied from the
+// repository at build time instead of duplicating binary place files in Git.
+def repositoryRoot = projectDir.parentFile.parentFile
+
+def syncGameAssets = tasks.register("syncGameAssets", Sync) {
+    from(repositoryRoot) {
+        include("staticdata/**")
+        include("res/test1.rbxl")
+    }
+    into(layout.buildDirectory.dir("generated/openrblx-assets"))
+}
+
+android {
+    namespace "com.openrblx.player"
+    compileSdk 35
+    ndkVersion "27.2.12479018"
+
+    defaultConfig {
+        applicationId "com.openrblx.player"
+        minSdk 29
+        targetSdk 35
+        versionCode 1
+        versionName "0.1.0"
+
+        // The first public APK targets real phones, not desktop emulators.
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+
+        externalNativeBuild {
+            cmake {
+                arguments "-DOPENRBLX_ROOT=${repositoryRoot.absolutePath}"
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+        release {
+            minifyEnabled false
+            shrinkResources false
+            // CI release artifacts are installable test APKs. Production
+            // distribution should replace this with a private release key.
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path file("../CMakeLists.txt")
+            version "3.22.1"
+        }
+    }
+
+    sourceSets {
+        main {
+            assets.srcDir(layout.buildDirectory.dir("generated/openrblx-assets"))
+        }
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(syncGameAssets)
+}

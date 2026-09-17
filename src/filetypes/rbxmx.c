@@ -1,5 +1,8 @@
 #include "filetypes.h"
 #include "xml.h"
+#ifdef PLATFORM_ANDROID
+#include "utils.h"  /* route fopen() through the APK asset manager */
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 

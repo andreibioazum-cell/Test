@@ -1,0 +1,83 @@
+name: Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - arena/**
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile:
+    name: Build and verify phone APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Run mobile configuration tests
+        run: make test
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: >-
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
+            cmake;3.22.1
+            ndk;27.2.12479018
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Build signed release APK
+        working-directory: android
+        run: gradle --no-daemon --stacktrace --warning-mode all :app:assembleRelease
+
+      - name: Verify APK and publish build summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
+          sha256sum "$apk"
+          {
+            echo "## Android APK"
+            echo
+            echo "✅ Release APK built and signature verified."
+            echo
+            echo "- ABI: arm64-v8a"
+            echo "- Minimum Android: API 29"
+            echo "- SHA-256: \`$(sha256sum "$apk" | cut -d ' ' -f 1)\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload phone APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrblx-phone-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14

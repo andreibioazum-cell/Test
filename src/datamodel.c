@@ -11,6 +11,7 @@
 #include "datamodelmesh.h"
 #include "runservice.h"
 #include <time.h>
+#include <math.h>
 #include "players.h"
 #include "coregui.h"
 #include "guibase.h"
@@ -208,6 +209,80 @@ bool DataModel_GetEngineFeature(DataModel *this, const char *name)
 
 static int primCount = 0;
 
+#ifdef OPENRBLX_MOBILE
+/*
+ * The Android player has no keyboard or mouse.  Keep the controls in the
+ * engine rather than in a desktop-only wrapper so every APK frame has the
+ * same input path: a left virtual stick moves the character and a right
+ * button jumps.  The layout is calculated from the actual surface size and
+ * therefore works on different phone aspect ratios.
+ */
+static void process_mobile_input(Players *players)
+{
+    if (!players->LocalPlayer || !players->LocalPlayer->Character) return;
+
+    const int screenWidth = GetScreenWidth();
+    const int screenHeight = GetScreenHeight();
+    const float radius = fminf(96.0f, fminf(screenWidth, screenHeight) * 0.16f);
+    const Vector2 stickCenter = { radius + 28.0f, screenHeight - radius - 28.0f };
+    const Rectangle jumpArea = {
+        screenWidth - radius * 2.0f - 28.0f,
+        screenHeight - radius * 2.0f - 28.0f,
+        radius * 2.0f,
+        radius * 2.0f,
+    };
+    const float moveSpeed = 6.0f * GetFrameTime();
+    Vector2 stickDelta = {0};
+    bool stickActive = false;
+    bool jumpDown = false;
+
+    for (int i = 0; i < GetTouchPointCount(); i++)
+    {
+        Vector2 touch = GetTouchPosition(i);
+        if (touch.x < screenWidth * 0.5f && touch.y > screenHeight * 0.45f)
+        {
+            stickDelta = Vector2Subtract(touch, stickCenter);
+            float length = Vector2Length(stickDelta);
+            if (length > radius && length > 0.0f)
+            {
+                stickDelta = Vector2Scale(stickDelta, radius / length);
+            }
+            stickActive = true;
+        }
+        else if (CheckCollisionPointRec(touch, jumpArea))
+        {
+            jumpDown = true;
+        }
+    }
+
+    if (stickActive)
+    {
+        Player_Move(players->LocalPlayer, (Vector3){
+            (stickDelta.x / radius) * moveSpeed,
+            0.0f,
+            (stickDelta.y / radius) * moveSpeed,
+        }, true);
+    }
+
+    static bool jumpWasDown;
+    if (jumpDown && !jumpWasDown)
+    {
+        Player_Move(players->LocalPlayer, (Vector3){0.0f, 1.5f, 0.0f}, true);
+    }
+    jumpWasDown = jumpDown;
+
+    DrawCircleV(stickCenter, radius, (Color){32, 32, 48, 120});
+    DrawCircleV(stickActive ? Vector2Add(stickCenter, stickDelta) : stickCenter,
+                radius * 0.42f, (Color){220, 220, 235, 180});
+    DrawCircleLines((int)jumpArea.x + (int)radius,
+                    (int)jumpArea.y + (int)radius,
+                    radius * 0.78f,
+                    (Color){220, 220, 235, 180});
+    DrawText("JUMP", (int)jumpArea.x + (int)radius - 24,
+             (int)jumpArea.y + (int)radius - 7, 14, WHITE);
+}
+#endif
+
 static void draw_recursive(Instance *inst)
 {
     if (!inst) return;
@@ -259,6 +334,7 @@ void DataModel_Draw(DataModel *this)
         }
     }
 
+#ifndef OPENRBLX_MOBILE
     if (players->LocalPlayer && players->LocalPlayer->Character)
     {
         if (IsKeyDown(KEY_W))
@@ -286,6 +362,7 @@ void DataModel_Draw(DataModel *this)
             Player_Move(players->LocalPlayer, (Vector3){0, -1, 0}, true);
         }
     }
+#endif
 
     if (IsKeyDown(KEY_LEFT_SHIFT))
     {
@@ -399,6 +476,10 @@ void DataModel_Draw(DataModel *this)
     //DrawCube((Vector3){1, 0, -1}, 1, 2, 2, MAGENTA);
 
     EndMode3D();
+
+#ifdef OPENRBLX_MOBILE
+    process_mobile_input(players);
+#endif
 
     Instance *rpgs = Instance_FindFirstChild(this, "RobloxPluginGuiService", false);
     draw_ui_recursive(rpgs);

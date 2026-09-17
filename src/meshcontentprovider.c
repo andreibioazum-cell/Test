@@ -4,6 +4,7 @@
 #include "debug.h"
 #include <rlgl.h>
 #include <string.h>
+#include <stdio.h>
 #include "httpservice.h"
 #include "datamodel.h"
 
@@ -30,7 +31,9 @@ MeshContentProvider *MeshContentProvider_new(const char *className, Instance *pa
     newInst->loadedMeshes = NULL;
     newInst->loadedMeshCount = 0;
 
-    newInst->studs = LoadTexture("staticdata/studs.png");
+    /* The asset shipped by the repository is DDS; keep the path valid on
+     * both desktop and Android asset filesystems. */
+    newInst->studs = LoadTexture("staticdata/studs.dds");
 
     newInst->cacheablecontentprovider.instance.Name = "MeshContentProvider";
 

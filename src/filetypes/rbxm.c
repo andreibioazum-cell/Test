@@ -4,12 +4,15 @@
 #include <string.h>
 #include <stdint.h>
 #include <raylib.h>
+#ifdef PLATFORM_ANDROID
+#include "utils.h"  /* route fopen() through the APK asset manager */
+#endif
 #include "lz4.h"
 #include "serialize.h"
 #include "part.h"
 #include "script.h"
 //#include <endian.h>
-#include "zstd.h"
+#include "zstd_decompress.h"
 #include "modulescript.h"
 
 #include "debug.h"

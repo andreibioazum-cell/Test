@@ -211,18 +211,7 @@ Source ../lib/zstd/src/zstd_decompress.c
 SourceGroup rbxs
 Source filetypes/rbxs.c
 
-SourceGroup studioclasses
-Source ../studio/classes/studioservice.c
-Source ../studio/classes/corepackages.c
-Source ../studio/classes/changehistoryservice.c
-
-Program studio
-Source ../studio/studio.c
-UseSourceGroup instance
-UseSourceGroup rbxmx
-UseSourceGroup rbxm
-UseSourceGroup studioclasses
-
+# Studio is desktop-only and is not part of the phone product.
 Program player
 Source ../player/player.c
 UseSourceGroup instance

@@ -4,7 +4,16 @@
 #include "instance.h"
 
 #include "rlw32compat.h"
+
+/*
+ * libcurl is used by the desktop builds.  The Android player deliberately
+ * keeps the native binary self-contained, so it can be built with
+ * OPENRBLX_NO_CURL and use the local place bundled in the APK.
+ */
+#ifndef OPENRBLX_NO_CURL
 #include <curl/curl.h>
+#endif
+
 #include "cJSON.h"
 
 typedef enum {
@@ -18,7 +27,11 @@ typedef enum {
 typedef struct HttpService {
     Instance instance;
 
+#ifndef OPENRBLX_NO_CURL
     CURL *curl;
+#else
+    void *curl;
+#endif
 } HttpService;
 
 HttpService *HttpService_new(const char *className, Instance *parent);

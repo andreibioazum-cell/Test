@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "datamodel.h"
 #include <raylib.h>
+#ifdef PLATFORM_ANDROID
+#include "utils.h"  /* route fopen() through the APK asset manager */
+#endif
 #include <string.h>
 #include "httpservice.h"
 #include "filetypes.h"
@@ -25,11 +28,17 @@ void usage(void)
 void AttemptLoadFile(DataModel *game, const char *file)
 {
     FILE *f = fopen(file, "rb");
-    char sig[8];
+    char sig[8] = {0};
     bool isModel = !strncmp(GetFileExtension(file), ".rbxm", 5);
     bool isBinary = false;
 
-    fread(sig, 1, 8, f);
+    if (!f)
+    {
+        TraceLog(LOG_ERROR, "Unable to open place: %s", file);
+        return;
+    }
+
+    fread(sig, 1, sizeof(sig), f);
 
     fclose(f);
 
@@ -112,13 +121,24 @@ int main(int argc, char **argv)
         }
     }
 
+#ifdef OPENRBLX_MOBILE
+    /* Android launches NativeActivity without command-line arguments. */
+    if (!gameToLoad)
+    {
+        gameToLoad = "res/test1.rbxl";
+    }
+#else
     if (!gameToLoad)
     {
         printf("Expected one game to load.\n");
         usage();
         return 1;
     }
+#endif
 
+#ifdef OPENRBLX_MOBILE
+    SetConfigFlags(FLAG_MSAA_4X_HINT);
+#endif
     InitWindow(1280, 720, "OpenRblx");
     DataModel *game = DataModel_new();
 

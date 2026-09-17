@@ -1,5 +1,6 @@
 #include "cacheablecontentprovider.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include "httpservice.h"
 #include <raylib.h>
 #include <string.h>

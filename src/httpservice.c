@@ -1,5 +1,6 @@
 #include "httpservice.h"
 #include <string.h>
+#include <stdio.h>
 #include <raylib.h>
 
 #include "debug.h"
@@ -12,7 +13,9 @@ HttpService *HttpService_new(const char *className, Instance *parent)
     newInst->instance.DataCost = sizeof(HttpService);
     newInst = realloc(newInst, sizeof(HttpService));
 
+#ifndef OPENRBLX_NO_CURL
     curl_global_init(CURL_GLOBAL_ALL);
+#endif
 
     if (parent) Instance_SetParent(newInst, parent);
 
@@ -47,6 +50,19 @@ WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 
 const char *HttpService_GetAsync(HttpService *this, const char *url, int *dataSize)
 {
+#ifdef OPENRBLX_NO_CURL
+    /*
+     * The mobile build is intentionally offline-first.  The Android player
+     * ships with a playable place in assets and does not link a second HTTP
+     * stack into the APK.  Keep the API available so the rest of the engine
+     * remains portable and fail cleanly for remote asset requests.
+     */
+    (void)this;
+    (void)url;
+    if (dataSize) *dataSize = 0;
+    FIXME("HTTP is unavailable in this build (OPENRBLX_NO_CURL): %s\n", "offline");
+    return NULL;
+#else
     struct MemoryStruct chunk = { malloc(1), 0 };
 
     this->curl = curl_easy_init();
@@ -61,6 +77,7 @@ const char *HttpService_GetAsync(HttpService *this, const char *url, int *dataSi
     if (res != CURLE_OK)
     {
         printf("Error: %s\n", curl_easy_strerror(res));
+        free(chunk.memory);
         return NULL;
     }
 
@@ -69,6 +86,7 @@ const char *HttpService_GetAsync(HttpService *this, const char *url, int *dataSi
     if (dataSize) *dataSize = chunk.size;
 
     return chunk.memory;
+#endif
 }
 
 const char *HttpService_PostAsync(HttpService *this, const char *url, const char *data, HttpContentType contentType)
