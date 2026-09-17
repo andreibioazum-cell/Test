@@ -9,10 +9,16 @@ DEFAULT_DEBUG_CHANNEL(camera)
 
 #include <rlgl.h>
 
+#ifdef PLATFORM_ANDROID
+// raylib already exports the rcamera implementation on Android.  Reuse it
+// instead of compiling a second copy into the OpenRBLX shared library.
+#define _UpdateCamera UpdateCamera
+#else
 #define UpdateCamera _UpdateCamera
 #define RCAMERA_IMPLEMENTATION
 #include "raylib/rcamera.h"
 #undef UpdateCamera
+#endif
 
 Camera_Instance *Camera_new(const char *className, Instance *parent)
 {
